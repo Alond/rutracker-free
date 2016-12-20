@@ -1,6 +1,5 @@
 package ru.jehy.rutracker_free;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;

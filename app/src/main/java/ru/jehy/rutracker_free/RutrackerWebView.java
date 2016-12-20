@@ -1,12 +1,12 @@
 package ru.jehy.rutracker_free;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 /**
@@ -36,7 +36,7 @@ public class RutrackerWebView extends WebView {
             return;
         }
 
-        WebViewClient webClient;
+        RutrackerWebViewClient webClient;
         webClient = new RutrackerWebViewClient(this.getContext());
         this.setWebViewClient(webClient);
 
