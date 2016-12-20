@@ -20,6 +20,8 @@ import cz.msebera.android.httpclient.protocol.HttpContext;
 
 public class MyConnectionSocketFactory implements ConnectionSocketFactory {
 
+    private static final String TAG = "MyConnectionSocketFa...";
+
     @Override
     public Socket createSocket(final HttpContext context) throws IOException {
         //InetSocketAddress socksaddr = (InetSocketAddress) context.getAttribute("socks.address");
@@ -55,8 +57,9 @@ public class MyConnectionSocketFactory implements ConnectionSocketFactory {
         DataInputStream inputStream = new DataInputStream(socket.getInputStream());
         if (inputStream.readByte() != (byte) 0x00 || inputStream.readByte() != (byte) 0x5a) {
             throw new IOException("SOCKS4a connect failed");
-        } else
-            Log.v("SSLConnectionSF", "SOCKS4a connect ok!");
+        } else {
+            Log.v(TAG, "SOCKS4a connect ok!");
+        }
         inputStream.readShort();
         inputStream.readInt();
         return socket;

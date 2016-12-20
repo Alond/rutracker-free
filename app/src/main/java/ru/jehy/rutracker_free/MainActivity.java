@@ -1,60 +1,35 @@
 package ru.jehy.rutracker_free;
 
-import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.webkit.WebView;
+
+import com.mikepenz.fontawesome_typeface_library.FontAwesome;
+import com.mikepenz.materialdrawer.Drawer;
+import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.model.DividerDrawerItem;
+import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
+import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
+import com.mikepenz.materialdrawer.model.SectionDrawerItem;
 
 import java.io.IOException;
 
-import ru.jehy.rutracker_free.updater.AppUpdate;
-import ru.jehy.rutracker_free.updater.AppUpdateUtil;
-import ru.jehy.rutracker_free.updater.DownloadUpdateService;
-import ru.jehy.rutracker_free.updater.UpdateBroadcastReceiver;
-
-import static ru.jehy.rutracker_free.MyApplication.onionProxyManager;
+import static ru.jehy.rutracker_free.RutrackerApplication.onionProxyManager;
 
 
-@SuppressLint("SetJavaScriptEnabled")
 public class MainActivity extends AppCompatActivity {
-    public static final String ACTION_SHOW_UPDATE_DIALOG = "ru.jehy.rutracker_free.SHOW_UPDATE_DIALOG";
-    private final UpdateBroadcastReceiver showUpdateDialog = new UpdateBroadcastReceiver();
+    private static final String TAG = "MainActivity";
+
     public ShareActionProvider mShareActionProvider;
-    private boolean updateChecked = false;
 
-    public static Intent createUpdateDialogIntent(AppUpdate update) {
-        Intent updateIntent = new Intent(MainActivity.ACTION_SHOW_UPDATE_DIALOG);
-        updateIntent.putExtra("update", update);
-        return updateIntent;
-    }
-
-
-    public static boolean isAppBeingUpdated(Context context) {
-
-        DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
-        DownloadManager.Query q = new DownloadManager.Query();
-        q.setFilterByStatus(DownloadManager.STATUS_RUNNING);
-        Cursor c = downloadManager.query(q);
-        if (c.moveToFirst()) {
-            String fileName = c.getString(c.getColumnIndex(DownloadManager.COLUMN_TITLE));
-            if (fileName.equals(DownloadUpdateService.DOWNLOAD_UPDATE_TITLE)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    private Drawer drawer;
 
 
     @Override
@@ -70,67 +45,71 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("Rutracker free", "OnCreate");
-        if (updateChecked)
-            return;
-        //first init
-        Thread updateThread = new Thread() {
-            @Override
-            public void run() {
-                AppUpdateUtil.checkForUpdate(MainActivity.this);
-                MainActivity.this.updateChecked = true;
-            }
-        };
-        updateThread.start();
+        setContentView(R.layout.activity_main);
+        Log.d(TAG, "OnCreate");
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(false);
+//        actionBar.setHomeAsUpIndicator(android.R.drawable.ic_dialog_alert);
+
+        drawer = new DrawerBuilder()
+                .withActivity(this)
+                .withHeader(R.layout.drawer_header)
+                .withSavedInstance(savedInstanceState)
+                .withDisplayBelowStatusBar(true)
+                .withTranslucentStatusBar(false)
+                .withToolbar((Toolbar) findViewById(R.id.toolbar))
+                .withDrawerLayout(R.layout.material_drawer)
+                .addDrawerItems(
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(FontAwesome.Icon.faw_home).withBadge("99").withIdentifier(1),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_free_play).withIcon(FontAwesome.Icon.faw_gamepad),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_custom).withIcon(FontAwesome.Icon.faw_eye).withBadge("6").withIdentifier(2),
+                        new SectionDrawerItem().withName(R.string.drawer_item_settings),
+                        new SecondaryDrawerItem().withName(R.string.drawer_item_help).withIcon(FontAwesome.Icon.faw_cog),
+                        new SecondaryDrawerItem().withName(R.string.drawer_item_open_source).withIcon(FontAwesome.Icon.faw_question),
+                        new DividerDrawerItem(),
+                        new SecondaryDrawerItem().withName(R.string.drawer_item_contact).withIcon(FontAwesome.Icon.faw_github).withBadge("12+").withIdentifier(1)
+                )
+                .build();
+
+
+//        drawer.getActionBarDrawerToggle().
+
     }
 
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d("Rutracker free", "onPause");
-        showUpdateDialog.unregister(this);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onStop();
-        Log.d("Rutracker free", "onDestroy");
-        /*if(onionProxyManager!=null)
-            try {
-                onionProxyManager.stop();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }*/
-    }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d("Rutracker free", "onResume");
-        setContentView(R.layout.activity_main);
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
-        MyWebView myWebView = (MyWebView) MainActivity.this.findViewById(R.id.myWebView);
-        showUpdateDialog.register(this, new IntentFilter(ACTION_SHOW_UPDATE_DIALOG));
+        Log.d(TAG, "onResume");
+
+        RutrackerWebView myWebView = (RutrackerWebView) MainActivity.this.findViewById(R.id.myWebView);
 
         try {
             //TODO: onionProxyManager.isRunning is a surprisingly heavy operation and should not be done on main thread...
-            if (!onionProxyManager.isRunning())
-                new TorPogressTask(MainActivity.this).execute();
+            if (!onionProxyManager.isRunning()) {
+                new TorProgressTask(MainActivity.this).execute();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
 
         String loaded = myWebView.getOriginalUrl();
-        MyApplication appState = ((MyApplication) getApplicationContext());
+        RutrackerApplication appState = ((RutrackerApplication) getApplicationContext());
         try {
-            if (loaded == null && onionProxyManager.isRunning())
+            if (loaded == null && onionProxyManager.isRunning()) {
                 myWebView.loadUrl(appState.currentUrl);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+//        drawer.getActionBarDrawerToggle().syncState();
     }
 
 
@@ -146,24 +125,52 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //add the values which need to be saved from the drawer to the bundle
+        outState = drawer.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_BACK:
-                    WebView myWebView = (WebView) findViewById(R.id.myWebView);
-                    assert myWebView != null;
-                    if (myWebView.canGoBack()) {
-                        myWebView.goBack();
-                    } else {
-                        finish();
-                    }
-                    return true;
-            }
-
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                drawer.openDrawer();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onKeyDown(keyCode, event);
     }
+
+    @Override
+    public void onBackPressed() {
+        //handle the back press :D close the drawer first and if the drawer is closed close the activity
+        if (drawer != null && drawer.isDrawerOpen()) {
+            drawer.closeDrawer();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+//
+//    @Override
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+//            switch (keyCode) {
+//                case KeyEvent.KEYCODE_BACK:
+//                    WebView myWebView = (WebView) findViewById(R.id.myWebView);
+//                    assert myWebView != null;
+//                    if (myWebView.canGoBack()) {
+//                        myWebView.goBack();
+//                    } else {
+//                        finish();
+//                    }
+//                    return true;
+//            }
+//
+//        }
+//        return super.onKeyDown(keyCode, event);
+//    }
 }
 

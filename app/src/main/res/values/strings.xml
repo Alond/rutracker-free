@@ -4,4 +4,11 @@
     <string name="cancel" >Отмена</string>
     <string name="update_available">Доступно обновление</string>
     <string name="update">обновить</string>
+    <string name="drawer_item_home">Домой</string>
+    <string name="drawer_item_free_play">Фри плей</string>
+    <string name="drawer_item_custom">Кастом</string>
+    <string name="drawer_item_settings">Настройки</string>
+    <string name="drawer_item_help">Хелп</string>
+    <string name="drawer_item_open_source">Опен ресурс</string>
+    <string name="drawer_item_contact">Контакт</string>
 </resources>
