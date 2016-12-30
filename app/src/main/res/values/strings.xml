@@ -11,4 +11,6 @@
     <string name="drawer_item_help">Хелп</string>
     <string name="drawer_item_open_source">Опен ресурс</string>
     <string name="drawer_item_contact">Контакт</string>
+    <string name="header_background">header background</string>
+    <string name="guest">Гость</string>
 </resources>

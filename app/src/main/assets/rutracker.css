@@ -42,3 +42,7 @@ a.med, a.small, a.gensmall, .branding .topmenu td:last-child div a, .branding .t
 
 /*устранение ограничения по ширине поста*/
 div.post_wrap{max-width:1000px!important;}
+
+div.topmenu,#main-nav {
+    display:none;
+}

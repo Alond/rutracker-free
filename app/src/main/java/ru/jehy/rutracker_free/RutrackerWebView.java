@@ -1,6 +1,7 @@
 package ru.jehy.rutracker_free;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -46,6 +47,12 @@ public class RutrackerWebView extends WebView {
         webSettings.setDisplayZoomControls(false);
 
         android.webkit.CookieManager.getInstance().setAcceptCookie(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (0 != (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+                WebView.setWebContentsDebuggingEnabled(true);
+            }
+        }
     }
 
     private void initProgressBar() {

@@ -3,12 +3,13 @@ package ru.jehy.rutracker_free;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
-import android.webkit.WebView;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,12 +32,10 @@ import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
 import cz.msebera.android.httpclient.impl.client.HttpClients;
 import cz.msebera.android.httpclient.impl.conn.PoolingHttpClientConnectionManager;
 import cz.msebera.android.httpclient.ssl.SSLContexts;
+import ru.beetlesoft.drawer.ProfileInfo;
+import ru.beetlesoft.drawer.RutrackerDrawer;
 
 import static ru.jehy.rutracker_free.RutrackerApplication.onionProxyManager;
-
-//import org.apache.custom.http.conn.scheme.PlainSocketFactory;
-//import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
-//import cz.msebera.android.httpclient.impl.conn.tsccm.ThreadSafeClientConnManager;
 
 /**
  * Created by jehy on 2016-03-31.
@@ -90,6 +89,15 @@ public class ProxyProcessor {
             Log.d(VIEW_TAG, "Adding custom css file...");
             try {
                 return new WebResourceResponse(MIME_TEXT_CSS, ENCODING_UTF_8, (context).getAssets().open("rutracker.css"));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        if (url.getPath().equals("/effroi.js")) {
+            Log.d(VIEW_TAG, "Adding custom css file...");
+            try {
+                return new WebResourceResponse(MIME_TEXT_CSS, ENCODING_UTF_8, (context).getAssets().open("effroi.js"));
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
@@ -188,8 +196,31 @@ public class ProxyProcessor {
                 if (mime.equals(MIME_TEXT_HTML) && Rutracker.isRutracker(url)) {
                     //conversions for rutacker
 
+
                     encoding = ENCODING_WINDOWS_1251;//for rutracker only
                     String data = Utils.convertStreamToString(inputStream, encoding);
+                    Document document = Jsoup.parse(data);
+                    if (data.contains("mode=register")) {
+                        //it is guest
+                        RutrackerDrawer.getInstance().updateGuestHeader();
+                    } else {
+                        //it is user
+                        Elements nameElement = document.select("a.logged-in-as-uname");
+                        ProfileInfo profileInfo = new ProfileInfo();
+                        profileInfo.name = nameElement.text();
+                        profileInfo.profileUrl = nameElement.attr("href");
+                        profileInfo.name = nameElement.text();
+
+                        RutrackerDrawer.getInstance().updateUserHeader(profileInfo);
+                    }
+                    Elements mainMenu = document.select("#main-nav>.floatL a");
+                    for (Element element: mainMenu
+                         ) {
+                        if (element.attr("href").contains("search.php")) {
+                            continue;
+                        }
+                        RutrackerDrawer.getInstance().addItem(element.text(),element.attr("href"));
+                    }
 
                     //convert POST data to GET data to be able ro intercept it
                     String replace = "<form(.*?)method=\"post\"(.*?)>";
@@ -198,10 +229,12 @@ public class ProxyProcessor {
 
                     //inject custom CSS
                     data = data.replace("</head>", "<link rel=\"stylesheet\" href=\"/custom.css\" type=\"text/css\"></head>");
+                    data = data.replace("</head>", "<script src=\"/effroi.js\"></script></head>");
 
                     //replace with custom logout
-                    data = data.replace("<a href=\"#\" onclick=\"return post2url('login.php', {logout: 1});\">Выход</a>",
-                            "<a href=\"logout.php\">Выход</a>");
+//                    data = data.replace("<a href=\"#\" onclick=\"return post2url('login.php', {logout: 1});\">Выход</a>",
+//                            "<a href=\"logout.php\">Выход</a>");
+
 
                     inputStream = new ByteArrayInputStream(data.getBytes(encoding));
                     //Log.d(VIEW_TAG, "data " + data);
@@ -233,8 +266,8 @@ public class ProxyProcessor {
         } catch (Exception e) {
             Log.d(VIEW_TAG, "Error fetching URL " + url + ":");
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     public String makeError(Exception e, String url) {
